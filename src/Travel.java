@@ -1,4 +1,5 @@
 import java.util.Date;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 import java.util.TimeZone;
 import java.text.DateFormat;
@@ -20,41 +21,75 @@ public class Travel {
 	static String[] companyName = { "Uber", "Didi", "99Taxis" };
 	static boolean exit = false;
 
-	// check for input errors
-	public static void errorInput(String name, double kms, int month, int day, double time) {
-		// if program is not exiting run input data.
-		if (!exit) {
-			// check user input
-			if (name.length() <= 0 || kms <= 0 || month < 1 || month > 12 || day < 0 || day > 31 || time < 0
-					|| time > 23.59) {
-				System.out.println("\n\nInput errors detected, please check input and try again...");
-				userDetails();
-			}
-		}
-	}
-
 	// print star
 	public static void star() {
 		for (int x = 0; x < 100; x++) {
 			System.out.print("*");
 		}
 	}
-
+	
+	//Menu Option 1 - user / travel details
 	public static void userDetails() {
 		boolean isDateValid = false;
+		boolean isKmValid = false;
+		boolean isMonthValid = false;
+		boolean isDayValid = false;
+		boolean isTimeValid = false;
 
 		System.out.print("Enter your name \n");
 		Scanner in = new Scanner(System.in);
 		username = in.next();
 
-		System.out.print("Enter your approximate kilometers of travel \n");
-		km = in.nextDouble();
+		while (!isKmValid) {
+			try {
+				System.out.print("Enter your approximate kilometers of travel \n");
+				Scanner x = new Scanner(System.in);
+				km = x.nextDouble();
+				if (km <= 0) {
+					System.out.println("---> Km input cannot be zero");
+					isKmValid = false;
+				} else {
+					isKmValid = true;
+				}
 
-		System.out.print("Month of travel \n");
-		monthOfTravel = in.nextInt();
+			} catch (InputMismatchException ex) {
+				System.out.println("---> Km input only accepts numbers");
+				isKmValid = false;
+			}
+		}
 
-		System.out.print("On which date of this month, you wish to travel \n");
-		dayOfTravel = in.nextInt();
+		while (!isMonthValid) {
+			try {
+				System.out.print("Month of travel \n");
+				Scanner m = new Scanner(System.in);
+				monthOfTravel = m.nextInt();
+				if (monthOfTravel <= 0 || monthOfTravel > 12) {
+					System.out.println("---> Month input need to be between 1 and 12");
+					isMonthValid = false;
+				} else {
+					isMonthValid = true;
+				}
+			} catch (InputMismatchException ex) {
+				System.out.println("---> month input only accepts integer numbers");
+				isMonthValid = false;
+			}
+		}
+
+		while (!isDayValid) {
+			try {
+				System.out.print("On which date of this month, you wish to travel\n");
+				Scanner d = new Scanner(System.in);
+				dayOfTravel = d.nextInt();
+				if (dayOfTravel < 1 || dayOfTravel > 31) {
+					System.out.print("Day of travel needs to be between 1 and 31");
+					isDayValid = false;
+				} else {
+					isDayValid = true;
+				}
+			} catch (InputMismatchException ex) {
+				System.out.println("---> day input only accepts integer numbers between 1 and 31");
+			}
+		}
 
 		while (!isDateValid) {
 			try {
@@ -96,21 +131,34 @@ public class Travel {
 				isDateValid = false;
 			}
 		}
-		System.out.print("Now Enter the time of travel - Ps: use 24 hours model example 14.00 \n");
-		timeOfTravel = in.nextDouble();
 
-		// check for peaktime
-		if (timeOfTravel <= 9 && timeOfTravel >= 7 || timeOfTravel <= 18 && timeOfTravel >= 16) {
-			peakTime = true;
-		} else {
-			peakTime = false;
+		while (!isTimeValid) {
+			try {
+				System.out.print("Now Enter the time of travel - Ps: use 24 hours model example 14.00 \n");
+				Scanner t = new Scanner(System.in);
+				timeOfTravel = t.nextDouble();
+				if(timeOfTravel<0 || timeOfTravel >23.59) {
+					System.out.print("---> Time need to be numbers only in 24 hours notation\n");
+					isTimeValid = false;
+				}else {
+					isTimeValid = true;
+				}
+			} catch (InputMismatchException ex) {
+				System.out.print("---> Time need to be numbers only in 24 hours notation\n");
+				isTimeValid = false;
+			}
+			// check for peak time
+			if (timeOfTravel <= 9 && timeOfTravel >= 7 || timeOfTravel <= 18 && timeOfTravel >= 16) {
+				peakTime = true;
+			} else {
+				peakTime = false;
+			}
 		}
 
 		menu();
-		// invoke method to check for user inputs
-		errorInput(username, km, monthOfTravel, dayOfTravel, timeOfTravel);
 	}
 
+	//calculate charges
 	public static double calculateCharge(int x, double kms, boolean isPeakTime, boolean isWeekend, int dayNumber,
 			String dayText, String monthText, boolean printCharges) {
 		// charges organized per index on index 0 is values for company 1 and so on
@@ -119,36 +167,47 @@ public class Travel {
 		double[] peakTimeSurcharge = { 2.5, 2, 1.97 };
 		double[] weekendSurcharge = { 3, 2.5, 2.98 };
 
-		// calculate the base charge and $/kms
-		totalCharge = baseCharge[x] + (kms * priceForKm[x]);
-
-		// check if there is weekend surcharge, and add to total if there is
-		if (isWeekend) {
-			totalCharge += weekendSurcharge[x];
-		}
-
-		// check if there is peak time surcharge, and add to total if there is
-		if (isPeakTime) {
-			totalCharge += peakTimeSurcharge[x];
-		}
-		// "if" conditional created in order to calculate and print or only calculate
-		// and return value
-		if (printCharges) {
+		// if user didn't input travel details beforehand the program will display a
+		// message
+		// and redirect to user details menu
+		if (kms == 0 || username == "") {
 			star();
-			System.out.println("\nYour travel details:" + "\n\nDay of the week on " + dayNumber + " of " + monthText
-					+ " which is " + dayText +
-					// ternary conditional for string output
-					"\nYour day of travel " + (weekend ? "falls" : "does not falls") + " under weekend category"
-					+ (weekend ? " (+ $ " + weekendSurcharge[x] + ")" : "") +
-					// ternary conditional for string output
-					"\n\n" + (peakTime ? "Time falls " : "Time does not falls ") + "in peaktime category"
-					+ (peakTime ? " (+ $ " + peakTimeSurcharge[x] + ")" : "")
-					+ "\n\nSo charges will be applied accordingly" + "\n\nThe final charges under company "
-					+ companyName[x] + " is: $ " + String.format("%.2f", totalCharge));
-			star();
+			System.out.println("\nWarning - Please input travel details to be able to get the charges estimation.");
+			userDetails();
 			return 0.0;
 		} else {
-			return totalCharge;
+			// calculate the base charge and $/kms
+			totalCharge = baseCharge[x] + (kms * priceForKm[x]);
+
+			// check if there is weekend surcharge, and add to total if there is
+			if (isWeekend) {
+				totalCharge += weekendSurcharge[x];
+			}
+
+			// check if there is peak time surcharge, and add to total if there is
+			if (isPeakTime) {
+				totalCharge += peakTimeSurcharge[x];
+			}
+			// "if" conditional created in order to calculate and print or only calculate
+			// and return value
+			if (printCharges) {
+				star();
+				System.out.println("\nYour travel details:" + "\n\nDay of the week on " + dayNumber + " of " + monthText
+						+ " which is " + dayText +
+						// ternary conditional for string output
+						"\nYour day of travel " + (weekend ? "falls" : "does not falls") + " under weekend category"
+						+ (weekend ? " (+ $ " + weekendSurcharge[x] + ")" : "") +
+						// ternary conditional for string output
+						"\n\n" + (peakTime ? "Time falls " : "Time does not falls ") + "in peaktime category"
+						+ (peakTime ? " (+ $ " + peakTimeSurcharge[x] + ")" : "")
+						+ "\n\nSo charges will be applied accordingly" + "\n\nThe final charges under company "
+						+ companyName[x] + " is: $ " + String.format("%.2f", totalCharge));
+				star();
+				menu();
+				return 0.0;
+			} else {
+				return totalCharge;
+			}
 		}
 	}
 
@@ -160,24 +219,24 @@ public class Travel {
 		} else {
 			// switch between menus and methods
 			switch (x) {
-			case 1:
-				userDetails();
-				break;
-			case 2:
-				calculateCharge(0, km, peakTime, weekend, dayOfTravel, dayText, month, true);
-				break;
-			case 3:
-				calculateCharge(1, km, peakTime, weekend, dayOfTravel, dayText, month, true);
-				break;
-			case 4:
-				calculateCharge(2, km, peakTime, weekend, dayOfTravel, dayText, month, true);
-				break;
-			case 5:
-				showReport();
-				break;
-			case 6:
-				exit();
-				break;
+				case 1:
+					userDetails();
+					break;
+				case 2:
+					calculateCharge(0, km, peakTime, weekend, dayOfTravel, dayText, month, true);
+					break;
+				case 3:
+					calculateCharge(1, km, peakTime, weekend, dayOfTravel, dayText, month, true);
+					break;
+				case 4:
+					calculateCharge(2, km, peakTime, weekend, dayOfTravel, dayText, month, true);
+					break;
+				case 5:
+					showReport();
+					break;
+				case 6:
+					exit();
+					break;
 			}
 		}
 	}
@@ -186,7 +245,7 @@ public class Travel {
 	public static void showReport() {
 		double[] totalCharges;
 		totalCharges = new double[3];
-		
+
 		// get the total values based on user details and companies charges
 		totalCharges[0] = calculateCharge(0, km, peakTime, weekend, dayOfTravel, dayText, month, false);
 		totalCharges[1] = calculateCharge(1, km, peakTime, weekend, dayOfTravel, dayText, month, false);
@@ -194,8 +253,8 @@ public class Travel {
 
 		double mostExpensive = totalCharges[0];
 		double cheapest = totalCharges[0];
-		String cheapestCompany = "";
-		String mostExpensiveCompany = "";
+		String cheapestCompany = companyName[0];
+		String mostExpensiveCompany = companyName[0];;
 
 		for (int x = 0; x < totalCharges.length; x++) {
 			if (totalCharges[x] > mostExpensive) {
@@ -216,15 +275,31 @@ public class Travel {
 		menu();
 	}
 
+	//display menu
 	public static void menu() {
-		System.out.println("\n1. Enter Usage Details" + "\n2. Display Charges under " + companyName[0]
-				+ "\n3. Display charges under " + companyName[1] + "\n4. Display charges under " + companyName[2]
-				+ "\n5. Show report" + "\n6. Exit ");
-		Scanner in = new Scanner(System.in);
-		option = in.nextInt();
-		isMenuValid(option);
+		boolean isMenuValid = false;
+
+		while (!isMenuValid) {
+			try {
+				System.out.println(
+					"\n1. Enter Usage Details" + "\n2. Display Charges under " + companyName[0]
+					+ "\n3. Display charges under " + companyName[1] + "\n4. Display charges under "
+					+ companyName[2] + "\n5. Show report" + "\n6. Exit "
+				);
+				Scanner in = new Scanner(System.in);
+				option = in.nextInt();
+				isMenuValid(option);
+				isMenuValid = true;
+			} catch (InputMismatchException ex) {
+				star();
+				System.out.println("\nPlease select menu from 1 to 6 only!");
+				isMenuValid = false;
+			}
+		}
+
 	}
 
+	//return variables to zero and print goodbye message
 	public static void exit() {
 		exit = true;
 		System.out.println("Thank You " + username + " for using the system.\n"
@@ -240,6 +315,8 @@ public class Travel {
 		dayText = "";
 		dayNumber = 0;
 		month = "";
+		
+        System.exit(0);        
 	}
 
 	public static void main(String[] args) {
